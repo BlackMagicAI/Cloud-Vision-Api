@@ -23,18 +23,26 @@ import requests
 ##  https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.fromarray
 ##  https://github.com/raspberrypilearning/the-all-seeing-pi/blob/master/code/overlay_functions.py
 
+### Start of gcloud authentication code - uncomment if you have gcloud installed
+### Follow the instruction in the following link to install gcloud on a Linux 32-bit (x86) platform
+### Raspberry PI. https://cloud.google.com/sdk/docs/install
+# # uncomment the following code if you have gcloud installed
+# # set system environment variable
+# os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '<INSERT-CREDENTIALS-FILE-PATH-HERE>'
+# # get bearer token from command line gcloud
+# bearer_token=subprocess.run(["gcloud", "auth", "application-default", "print-access-token"],stdout=subprocess.PIPE, universal_newlines=True)
+# time.sleep(2)
+# BEARER_TOKEN = bearer_token.stdout.strip()
+### End of gcloud authentication code
 
-######Start function definitions
-# set system environment variable
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '<INSERT-CREDENTIALS-FILE-PATH-HERE>'
-# get bearer token from command line gcloud 
-bearer_token=subprocess.run(["gcloud", "auth", "application-default", "print-access-token"],stdout=subprocess.PIPE, universal_newlines=True)
-time.sleep(2)
-BEARER_TOKEN = bearer_token.stdout.strip()
+## Paste BEARER_TOKEN from goole Colaboratory here. Comment this code if you are using gcloud
+BEARER_TOKEN = '<INSERT-BEARER-TOKEN-COPIED-FROM-NOTEBOOK-HERE>'
+
 # define variables
 url = 'https://vision.googleapis.com/v1/images:annotate'
 bearer = 'Bearer {}'.format(BEARER_TOKEN)
 
+######Start function definitions
 # Pass the image data to an encoding function.
 def encode_image(image):
   infile = BytesIO()
@@ -64,7 +72,7 @@ def processJson(response):
   boxes = []
   classes = []
   scores = []
-  for responseObject in response.get('responses'):    
+  for responseObject in response.get('responses'):
     for localizedObjectAnnotation in responseObject.get('localizedObjectAnnotations', []):
       classes.append(localizedObjectAnnotation.get('name'))
       scores.append(localizedObjectAnnotation.get('score'))
@@ -75,9 +83,9 @@ def processJson(response):
         else:
           box.clear()
           break
-        
+
       if (bool(box)):
-        boxes.append(box) 
+        boxes.append(box)
   return boxes, classes, scores
 
 # Form JSON object for POST request to Vision API.
@@ -102,7 +110,7 @@ def printTimeStamp(start, log):
   end = time.time()
   print(log + ': time: {0:.2f}s'.format(end-start))
 
-#Combine original image & bounding box annotation overlays image into one image
+# Combine original image & bounding box annotation overlays image into one image
 # & save to jpg file.
 # From Ref: https://github.com/raspberrypilearning/the-all-seeing-pi/blob/master/code/overlay_functions.py
 def output_overlay(filepath, output=None, overlay=None):
@@ -132,7 +140,7 @@ pad = None
 for frame in camera.capture_continuous(rawCapture, format='rgb'):
 
   image = Image.fromarray(frame.array)
-  
+
   # Create an image padded to the required size with
   # mode 'RGBA' needed for bounding box overlay with transparency mask.
   pad = Image.new('RGBA', (
@@ -145,16 +153,16 @@ for frame in camera.capture_continuous(rawCapture, format='rgb'):
 
   # Form json request payload
   jsonBody = getJSONBody(image)
-  
+
   # send POST request to url
-  response = requests.post(url, 
-                    headers={'Content-Type': 'application/json; charset=utf-8', 
+  response = requests.post(url,
+                    headers={'Content-Type': 'application/json; charset=utf-8',
                              'Authorization': bearer},
                     json=jsonBody
                     )
-  
+
   # printTimeStamp(start, "Detection Time")
-  
+
   #Process model output data annotate image with bounding boxes
   boxes, classes, scores = processJson(response.json())
   drawBoundingBox(pad, boxes, classes, scores, (0,255,0))
@@ -162,13 +170,13 @@ for frame in camera.capture_continuous(rawCapture, format='rgb'):
   #Remove previous overlays
   for o in camera.overlays:
     camera.remove_overlay(o)
-  
+
   o = camera.add_overlay(pad.tobytes(), alpha = 255, layer = 3, size=pad.size)
-  
+
   rawCapture.truncate(0)
   #break #uncomment to end loop and output image to jpg file
 
-#Combine original image & bounding box annotation overlays image into one image
+# Combine original image & bounding box annotation overlays image into one image
 # & save to jpg file.
 output_overlay("out/goproyolo.jpg", image, pad)
 
