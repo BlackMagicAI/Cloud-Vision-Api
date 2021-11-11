@@ -13,7 +13,7 @@ import requests
 
 #########################################
 # File:   gopro_cloud_vision.py
-# GoPro camera object detection using tiny-yolo 3 model.
+# GoPro camera object detection using Google Vision API.
 # Author: Maurice Tedder
 # Date:   Nov. 4, 2021
 ##Ref:
