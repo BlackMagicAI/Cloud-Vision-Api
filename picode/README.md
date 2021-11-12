@@ -9,5 +9,5 @@ This example demonstrates running real time object detection using Cloud Vision 
 	 - Model: NS-HG1182
 	 - SKU: 6167620
  - Raspberry Pi 3 Model B+1.4 GHz Cortex-A53 with 1 GB Ram
- - Raspian 10 (buster) OS
- - Python 3.7.3 installed
+   - Raspian 10 (buster) OS
+   - Python 3.7.3 installed
